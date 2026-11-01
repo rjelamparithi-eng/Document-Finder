@@ -1,0 +1,9 @@
+Document ID: DOC023
+Title: Medical Camp Registration
+Department: Health
+Category: Application Form
+Importance: 4
+Version: 1
+Keywords: medical camp registration application
+
+Registration procedure for a local health camp.

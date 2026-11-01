@@ -1,0 +1,9 @@
+Document ID: DOC040
+Title: Construction Site Instructions
+Department: Public Works
+Category: Service Instruction
+Importance: 4
+Version: 1
+Keywords: construction safety instructions site
+
+Safety instructions for public works construction sites.

@@ -1,0 +1,9 @@
+Document ID: DOC047
+Title: Public Service Grievance Policy
+Department: Revenue
+Category: Policy
+Importance: 4
+Version: 1
+Keywords: public grievance service policy
+
+Policy for registering and reviewing service complaints.

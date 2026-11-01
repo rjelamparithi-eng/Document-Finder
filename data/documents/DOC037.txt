@@ -1,0 +1,9 @@
+Document ID: DOC037
+Title: Waste Collection Schedule Notice
+Department: Public Works
+Category: Notification
+Importance: 3
+Version: 1
+Keywords: waste collection schedule notice
+
+Notice of local waste collection schedules.

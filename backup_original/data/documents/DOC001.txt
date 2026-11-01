@@ -1,0 +1,9 @@
+Document ID: DOC001
+Title: Birth Certificate Application
+Department: Revenue
+Category: Application Form
+Importance: 5
+Version: 1
+Keywords: birth certificate application identity
+
+Instructions for applying for a birth certificate at the revenue office.

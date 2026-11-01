@@ -1,0 +1,9 @@
+Document ID: DOC015
+Title: Tax Exemption Policy
+Department: Revenue
+Category: Policy
+Importance: 4
+Version: 1
+Keywords: tax exemption policy property
+
+Policy summary for eligible property tax exemptions.

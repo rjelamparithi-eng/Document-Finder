@@ -1,0 +1,9 @@
+Document ID: DOC018
+Title: Document Verification Instructions
+Department: Revenue
+Category: Service Instruction
+Importance: 4
+Version: 1
+Keywords: document verification instructions identity
+
+Instructions for verifying original and copied documents.

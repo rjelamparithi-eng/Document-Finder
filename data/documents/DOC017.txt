@@ -1,0 +1,9 @@
+Document ID: DOC017
+Title: Public Record Access Policy
+Department: Revenue
+Category: Policy
+Importance: 3
+Version: 1
+Keywords: record access policy public
+
+Rules for requesting nonconfidential public records.

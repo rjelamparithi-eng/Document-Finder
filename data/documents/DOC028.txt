@@ -1,0 +1,9 @@
+Document ID: DOC028
+Title: Exam Registration Notice
+Department: Education
+Category: Notification
+Importance: 4
+Version: 1
+Keywords: exam registration notice students
+
+Notice about registration for school examinations.

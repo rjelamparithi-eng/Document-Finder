@@ -1,0 +1,9 @@
+Document ID: DOC011
+Title: Residence Certificate Application
+Department: Revenue
+Category: Application Form
+Importance: 5
+Version: 1
+Keywords: residence certificate application address
+
+Application process for a local residence certificate.

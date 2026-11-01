@@ -1,0 +1,9 @@
+Document ID: DOC043
+Title: Pension Application Form
+Department: Revenue
+Category: Application Form
+Importance: 5
+Version: 1
+Keywords: pension application welfare
+
+Application guidance for local pension support.

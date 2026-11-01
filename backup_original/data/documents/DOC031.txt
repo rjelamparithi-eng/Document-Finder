@@ -1,0 +1,9 @@
+Document ID: DOC031
+Title: Library Membership Application
+Department: Education
+Category: Application Form
+Importance: 3
+Version: 1
+Keywords: library membership application student
+
+Application to register for school library services.

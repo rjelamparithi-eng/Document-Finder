@@ -1,0 +1,5 @@
+backup_original/
+.git/
+.gitignore
+*.bat
+scratch/

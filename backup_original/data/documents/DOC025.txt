@@ -1,0 +1,9 @@
+Document ID: DOC025
+Title: Medicine Storage Instructions
+Department: Health
+Category: Service Instruction
+Importance: 4
+Version: 1
+Keywords: medicine storage health instructions
+
+Basic instructions for storing clinic medicines safely.

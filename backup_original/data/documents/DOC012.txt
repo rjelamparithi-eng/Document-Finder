@@ -1,0 +1,9 @@
+Document ID: DOC012
+Title: Community Certificate Guidelines
+Department: Revenue
+Category: Guidelines
+Importance: 4
+Version: 1
+Keywords: community certificate eligibility guidelines
+
+Eligibility guidelines for community certificate requests.

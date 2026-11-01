@@ -1,0 +1,9 @@
+Document ID: DOC024
+Title: Infection Prevention Policy
+Department: Health
+Category: Policy
+Importance: 5
+Version: 1
+Keywords: infection prevention policy health
+
+Policy to reduce infection risk at local clinics.

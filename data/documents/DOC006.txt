@@ -1,0 +1,9 @@
+Document ID: DOC006
+Title: Property Tax Payment Notice
+Department: Revenue
+Category: Notification
+Importance: 4
+Version: 1
+Keywords: property tax payment notice
+
+Notice about property tax payment and due dates.

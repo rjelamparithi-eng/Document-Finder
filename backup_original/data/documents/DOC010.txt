@@ -1,0 +1,9 @@
+Document ID: DOC010
+Title: Income Certificate Application
+Department: Revenue
+Category: Application Form
+Importance: 5
+Version: 1
+Keywords: income certificate application revenue
+
+Application instructions for requesting an income certificate.

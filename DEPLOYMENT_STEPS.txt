@@ -1,0 +1,83 @@
+================================================================================
+ARAM OFFICE - RAILWAY ONLINE DEPLOYMENT GUIDE
+================================================================================
+
+This project is prepared for 1-click deployment on Railway (https://railway.app)
+with Java 21 and a managed MySQL database service.
+
+--------------------------------------------------------------------------------
+STEP 1: PUSH CODE TO GITHUB (OR USE RAILWAY CLI)
+--------------------------------------------------------------------------------
+1. Ensure your repository contains all project files including:
+   - Dockerfile
+   - lib/mysql-connector-j-8.4.0.jar
+   - src/
+   - web/
+   - data/
+   - schema.sql
+
+2. Push your project to your GitHub repository.
+
+--------------------------------------------------------------------------------
+STEP 2: CREATE A PROJECT & ADD MYSQL ON RAILWAY
+--------------------------------------------------------------------------------
+1. Log in to your Railway dashboard at https://railway.app
+2. Click "Create a New Project" (or "New Project").
+3. Select "Provision MySQL".
+   - Railway will provision a private, secure MySQL 8 instance.
+   - MySQL is kept on Railway's private network (no public exposure needed).
+
+--------------------------------------------------------------------------------
+STEP 3: DEPLOY THE ARAM OFFICE WEB SERVICE
+--------------------------------------------------------------------------------
+1. In the same Railway project canvas, click "+ Create" or "New".
+2. Choose "GitHub Repo" and select your repository.
+3. Railway automatically detects the "Dockerfile" and begins building
+   the Java 21 container with the MySQL JDBC driver.
+
+--------------------------------------------------------------------------------
+STEP 4: LINK DATABASE ENVIRONMENT VARIABLES
+--------------------------------------------------------------------------------
+1. Click on the deployed Web Service card in Railway.
+2. Go to the "Variables" tab.
+3. Click "New Variable" or "Add Reference".
+4. Reference the MySQL service variables, or Railway automatically provides:
+   - MYSQLHOST
+   - MYSQLPORT
+   - MYSQLUSER
+   - MYSQLPASSWORD
+   - MYSQLDATABASE
+   - MYSQL_URL
+   (Our DatabaseConnection.java automatically reads any of these variables).
+5. Railway also automatically injects the "PORT" variable for the public web port.
+
+--------------------------------------------------------------------------------
+STEP 5: GENERATE PUBLIC DOMAIN
+--------------------------------------------------------------------------------
+1. In the Web Service, navigate to "Settings" > "Networking".
+2. Click "Generate Domain" (e.g. aram-office-production.up.railway.app).
+3. Railway provides free SSL/HTTPS encryption on this public domain.
+
+--------------------------------------------------------------------------------
+STEP 6: AUTOMATIC STARTUP & MIGRATION
+--------------------------------------------------------------------------------
+1. When the container starts:
+   - WebServer binds to 0.0.0.0 on Railway's assigned $PORT.
+   - DatabaseConnection initializes all 6 tables automatically if not present.
+   - Initial accounts and documents are migrated into MySQL on first boot.
+2. Open the public domain in your browser.
+3. Log in with your Higher Official or Lower Official account:
+   - Higher Official: username "higher"
+   - Lower Official : username "viewer"
+
+--------------------------------------------------------------------------------
+LOCAL EXECUTION (FOR LOCAL TESTING & GRADING)
+--------------------------------------------------------------------------------
+To run locally:
+1. Ensure MySQL (e.g., XAMPP) is running on 127.0.0.1:3306.
+2. Double-click or run:
+   .\RUN_WEBSITE.bat
+3. Open http://127.0.0.1:8080 in your browser.
+4. To run tests:
+   .\RUN_TESTS.bat
+================================================================================

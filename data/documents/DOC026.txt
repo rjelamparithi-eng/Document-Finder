@@ -1,0 +1,9 @@
+Document ID: DOC026
+Title: Hospital Visit Notification
+Department: Health
+Category: Notification
+Importance: 3
+Version: 1
+Keywords: hospital visit notification
+
+Notice about visitor registration for health facilities.

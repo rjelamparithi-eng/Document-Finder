@@ -1,0 +1,9 @@
+Document ID: DOC002
+Title: Vaccination Instructions
+Department: Health
+Category: Service Instruction
+Importance: 4
+Version: 1
+Keywords: vaccination health instructions immunization
+
+Instructions for vaccination registration and clinic attendance.

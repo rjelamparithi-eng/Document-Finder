@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aram Office | E-Governance Document System</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <div class="brand-mark">A</div>
+      <h1>Aram Office Login</h1>
+      <p>Sign in as Higher Official or Lower Official.</p>
+      <form id="loginForm">
+        <label>Username<input name="username" autocomplete="username" required></label>
+        <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
+        <p id="loginMessage" class="login-error" role="alert"></p>
+        <button class="button button-primary" type="submit">Sign In</button>
+      </form>
+      <small>Demo usernames: higher / viewer. First-run passwords are shown in the Java terminal.</small>
+    </div>
+  </div>
+  <div class="layout" id="workspace" hidden>
+    <aside class="sidebar" id="sidebar">
+      <div class="brand"><div class="brand-mark">A</div><div><strong>ARAM OFFICE</strong><span>E-Governance Portal</span></div></div>
+      <div class="sidebar-heading">WORKSPACE</div>
+      <nav class="navigation" aria-label="Main navigation">
+        <button class="nav-link active" data-page="dashboard"><span class="nav-icon">▦</span> Overview</button>
+        <button class="nav-link" data-page="documents"><span class="nav-icon">▤</span> All Documents</button>
+        <button class="nav-link" data-page="search"><span class="nav-icon">⌕</span> Search Documents</button>
+        <button class="nav-link" data-page="categories"><span class="nav-icon">▥</span> Departments</button>
+        <button class="nav-link" data-page="versions"><span class="nav-icon">↺</span> Version History</button>
+        <button class="nav-link" data-page="index"><span class="nav-icon">#</span> Keyword Index</button>
+        <button class="nav-link" data-page="requests"><span class="nav-icon">✎</span> Correction Requests</button>
+        <button class="nav-link higher-only" data-page="activity"><span class="nav-icon">↺</span> Activity Log</button>
+        <div class="nav-separator"></div>
+        <button class="nav-link nav-add" data-page="add"><span class="nav-icon">＋</span> Add Document</button>
+      </nav>
+      <div class="sidebar-bottom"><div class="sidebar-status"><span class="status-dot"></span> Local Java server</div><p>College mini project<br>Fictional records for demonstration</p></div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar"><button class="mobile-menu" id="mobileMenu" aria-label="Open menu">☰</button><span class="breadcrumb">DOCUMENT MANAGEMENT <span>/</span> <strong id="breadcrumb">Overview</strong></span><div class="topbar-right"><span class="live-dot"></span> System Online <span class="topbar-date">LOCAL PROTOTYPE</span> <strong id="loggedUser"></strong> <button type="button" class="button button-secondary button-small" id="logoutButton">Logout</button></div></div>
+
+      <div class="content">
+        <section class="page active" id="page-dashboard">
+          <div class="hero"><div><div class="eyebrow">WELCOME TO ARAM OFFICE</div><h1>Document Management<br>made simpler.</h1><p>Search, organize and manage government document records from one place.</p><div class="hero-actions"><button class="button button-white" data-page="search">Search Documents →</button><button class="button button-outline-light" data-page="add">+ New Document</button></div></div><div class="hero-art" aria-hidden="true"><div class="paper p1"><b>ARAM</b><span></span><span></span><span class="short"></span></div><div class="paper p2"><b>DOCUMENT</b><span></span><span></span><span class="short"></span><div class="seal">✓</div></div></div></div>
+          <div class="section-bar"><h2>System Overview</h2><span class="light-note">Live from Java backend</span></div>
+          <div class="stats-grid"><div class="stat-card"><span class="stat-icon mint">▤</span><p>Total Documents</p><strong id="statDocuments">—</strong><small>Registered records</small></div><div class="stat-card"><span class="stat-icon blue">▥</span><p>Departments</p><strong id="statDepartments">—</strong><small>Government sections</small></div><div class="stat-card"><span class="stat-icon gold">◈</span><p>Categories</p><strong id="statCategories">—</strong><small>Document types</small></div><div class="stat-card"><span class="stat-icon purple">#</span><p>Indexed Keywords</p><strong id="statKeywords">—</strong><small>Exact-match search</small></div></div>
+          <div class="two-columns"><div class="panel"><div class="panel-title"><h3>Document Directory</h3><button class="text-button" data-page="documents">View all →</button></div><div id="recentDocuments" class="mini-list"></div></div><div class="panel"><div class="panel-title"><h3>Departments</h3><button class="text-button" data-page="categories">Explore →</button></div><div id="departmentSummary" class="department-summary"></div></div></div>
+        </section>
+
+        <section class="page" id="page-documents">
+          <div class="page-heading"><div><div class="eyebrow dark">DOCUMENT DIRECTORY</div><h1>All Documents</h1><p>Browse documents, filter by department and open full details.</p></div><button class="button button-primary" data-page="add">+ Add Document</button></div>
+          <div class="panel filter-panel"><div class="filter-row"><label class="search-input"><span>⌕</span><input id="documentFilter" placeholder="Search by ID or title..." autocomplete="off"></label><select id="departmentFilter" aria-label="Department filter"><option value="">All Departments</option></select><select id="categoryFilter" aria-label="Category filter"><option value="">All Categories</option></select></div><div class="results-head"><span id="documentCountLabel">Loading documents...</span><span>Current versions shown</span></div><div id="documentTable" class="table-wrap"></div></div>
+        </section>
+
+        <section class="page" id="page-search">
+          <div class="page-heading"><div><div class="eyebrow dark">DOCUMENT RETRIEVAL</div><h1>Search Documents</h1><p>Search by keyword, title or document ID using Java search methods.</p></div></div>
+          <div class="panel search-panel"><div class="search-tabs" role="group" aria-label="Search type"><button class="search-tab active" data-type="keyword">Keyword Search</button><button class="search-tab" data-type="title">Title Search</button><button class="search-tab" data-type="id">Document ID</button></div><form id="searchForm" class="search-form"><div class="big-search"><span class="big-search-icon">⌕</span><input id="searchQuery" placeholder="e.g. water connection application" autocomplete="off" required><button class="button button-primary" type="submit">Search</button></div><div class="suggestions" id="suggestions" aria-live="polite"></div></form><p class="search-tip" id="searchTip">Keyword search uses HashMap + HashSet and ranks results by number of matching words and importance.</p></div>
+          <div class="results-title"><h2>Search Results</h2><span id="searchResultCount" class="light-note">Enter a query to get started</span></div><div id="searchResults" class="search-results"><div class="empty-state">⌕<h3>Find the document you need</h3><p>Try searching for “certificate”, “water”, or “school admission”.</p></div></div>
+        </section>
+
+        <section class="page" id="page-categories">
+          <div class="page-heading"><div><div class="eyebrow dark">DOCUMENT ORGANIZATION</div><h1>Departments & Categories</h1><p>Documents arranged by department, category and ID.</p></div></div><div id="categoryGroups" class="category-grid"></div>
+        </section>
+
+        <section class="page" id="page-versions">
+          <div class="page-heading"><div><div class="eyebrow dark">DOCUMENT CONTROL</div><h1>Version Management</h1><p>Keep earlier copies and decide which version is current.</p></div></div>
+          <div class="panel version-panel"><label class="field-label" for="versionDocSelect">Choose a document</label><select id="versionDocSelect" class="long-select"><option value="">Select a document...</option></select><div id="versionArea" class="version-area"><div class="empty-state">↺<h3>Select a document</h3><p>Its saved versions and update options will appear here.</p></div></div></div>
+        </section>
+
+        <section class="page" id="page-index">
+          <div class="page-heading"><div><div class="eyebrow dark">DATA STRUCTURES</div><h1>Keyword Index</h1><p>Inverted index: every keyword points to unique document IDs.</p></div></div>
+          <div class="panel"><div class="index-header"><label class="search-input"><span>⌕</span><input id="keywordFilter" placeholder="Filter keywords..."></label><span class="light-note" id="keywordCountLabel"></span></div><div id="keywordIndexTable" class="table-wrap"></div></div>
+        </section>
+
+        <section class="page" id="page-requests">
+          <div class="page-heading"><div><div class="eyebrow dark">MANUAL VERIFICATION</div><h1>Document Correction Requests</h1><p>Lower Officials report a mistake. Higher Officials approve or reject after checking it.</p></div></div>
+          <div class="panel form-panel viewer-only">
+            <h3>Raise Correction Request</h3>
+            <form id="correctionForm">
+              <div class="form-grid">
+                <label>Document ID<select id="requestDocumentId" name="documentId" required></select></label>
+                <label class="full-span">Reason<textarea name="reason" maxlength="1000" rows="3" required placeholder="What is incorrect in the document?"></textarea></label>
+                <label class="full-span">Suggested Correction<textarea name="suggestion" maxlength="2000" rows="4" required placeholder="What should be corrected?"></textarea></label>
+              </div>
+              <div class="form-actions"><button type="submit" class="button button-primary">Submit Request</button></div>
+            </form>
+          </div>
+          <div class="panel form-panel"><h3 id="requestListTitle">Correction Requests</h3><div class="table-wrap" id="correctionList"></div></div>
+        </section>
+
+        <section class="page higher-only" id="page-activity">
+          <div class="page-heading"><div><div class="eyebrow dark">ACCOUNTABILITY</div><h1>Activity Log</h1><p>Actions recorded by the Java server.</p></div></div>
+          <div class="panel form-panel"><div class="table-wrap" id="activityList"></div></div>
+        </section>
+
+        <section class="page" id="page-add">
+          <div class="page-heading"><div><div class="eyebrow dark">DOCUMENT REGISTRATION</div><h1>Add New Document</h1><p>Enter document metadata to create a new searchable record.</p></div></div>
+          <div class="panel form-panel"><div class="form-intro"><span class="form-symbol">＋</span><div><h3>Document Information</h3><p>All fields are required. Document ID must be unique.</p></div></div><form id="addDocumentForm"><div class="form-grid"><label>Document ID<input name="id" placeholder="e.g. DOC049" required maxlength="40"></label><label>Document Title<input name="title" placeholder="e.g. New Application Guidelines" required maxlength="180"></label><label>Department<select name="department" required><option value="">Select Department</option><option>Revenue</option><option>Health</option><option>Education</option><option>Public Works</option></select></label><label>Category<select name="category" required><option value="">Select Category</option><option>Application Form</option><option>Circular</option><option>Guidelines</option><option>Notification</option><option>Policy</option><option>Service Instruction</option></select></label><label>Importance (1–5)<select name="importance" required><option value="">Select Importance</option><option value="1">1 — Very Low</option><option value="2">2 — Low</option><option value="3">3 — Medium</option><option value="4">4 — High</option><option value="5">5 — Very High</option></select></label><label>Keywords<input name="keywords" placeholder="e.g. certificate, application, revenue" required></label><label class="full-span">Document Content<textarea name="content" rows="5" placeholder="Enter a short description or document content..." required></textarea></label></div><div class="form-actions"><button type="reset" class="button button-secondary">Clear Form</button><button type="submit" class="button button-primary">Save Document</button></div></form></div>
+        </section>
+      </div>
+      <footer>ARAM OFFICE • E-Governance Document Processing and Retrieval System <span>College prototype | Java + HTML + CSS + JavaScript</span></footer>
+    </main>
+  </div>
+
+  <dialog id="documentDialog" class="document-dialog"><div class="dialog-head"><div><div class="eyebrow dark">DOCUMENT DETAILS</div><h2 id="dialogTitle"></h2></div><button type="button" id="dialogClose" class="close-button" aria-label="Close">×</button></div><div id="dialogBody"></div></dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

@@ -1,0 +1,9 @@
+Document ID: DOC009
+Title: Building Maintenance Instructions
+Department: Public Works
+Category: Service Instruction
+Importance: 3
+Version: 1
+Keywords: building maintenance safety instructions
+
+Instructions for maintenance checks in government buildings.

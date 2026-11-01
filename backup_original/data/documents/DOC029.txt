@@ -1,0 +1,9 @@
+Document ID: DOC029
+Title: Attendance Policy
+Department: Education
+Category: Policy
+Importance: 3
+Version: 1
+Keywords: attendance school policy students
+
+Policy describing minimum school attendance expectations.

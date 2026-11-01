@@ -1,0 +1,9 @@
+Document ID: DOC020
+Title: Clinic Appointment Notice
+Department: Health
+Category: Notification
+Importance: 3
+Version: 1
+Keywords: clinic appointment notification schedule
+
+Notice about scheduled clinic appointments.

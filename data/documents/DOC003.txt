@@ -1,0 +1,9 @@
+Document ID: DOC003
+Title: Student Scholarship Guidelines
+Department: Education
+Category: Guidelines
+Importance: 4
+Version: 1
+Keywords: student scholarship education guidelines
+
+Guidelines for eligible students to apply for scholarships.

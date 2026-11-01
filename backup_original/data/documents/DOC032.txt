@@ -1,0 +1,9 @@
+Document ID: DOC032
+Title: School Safety Instructions
+Department: Education
+Category: Service Instruction
+Importance: 5
+Version: 1
+Keywords: school safety instructions students
+
+Instructions for school safety drills and reporting.

@@ -1,0 +1,9 @@
+Document ID: DOC021
+Title: Community Clinic Guidelines
+Department: Health
+Category: Guidelines
+Importance: 4
+Version: 1
+Keywords: clinic health guidelines patients
+
+Guidelines for visitors to community clinics.

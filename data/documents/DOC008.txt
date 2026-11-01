@@ -1,0 +1,9 @@
+Document ID: DOC008
+Title: School Admission Guidelines
+Department: Education
+Category: Guidelines
+Importance: 4
+Version: 1
+Keywords: school admission guidelines education
+
+Guidelines for school admission and document submission.
