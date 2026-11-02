@@ -35,7 +35,7 @@ public class AdminProvisioner {
                 System.out.print("Enter username: ");
                 username = scanner.nextLine().trim();
 
-                System.out.print("Enter password: ");
+                System.out.print("Enter password (at least 12 characters): ");
                 password = scanner.nextLine().trim();
             }
 

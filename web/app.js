@@ -33,6 +33,15 @@ async function api(url, data = null) {
   try { response = await fetch(url, options); }
   catch { throw new Error('Cannot connect to Java server. Check the terminal.'); }
   const body = await response.json();
+  if (response.status === 401 && url !== '/api/login' && url !== '/api/me') {
+    showLogin();
+    const loginMsg = el('loginMessage');
+    if (loginMsg) {
+      loginMsg.className = 'login-error';
+      loginMsg.textContent = 'Your session has expired. Please sign in again.';
+    }
+    throw new Error('Your session has expired. Please sign in again.');
+  }
   if (!response.ok || !body.success) throw new Error(body.message || 'Request failed.');
   return body.data;
 }
@@ -65,7 +74,9 @@ function page(name) {
 
 function documentRow(doc) {
   const pdfBadge = doc.hasPdf ? `<span class="tag tag-gold" title="${safe(doc.pdfFilename || 'PDF attached')}">📄 PDF</span> ` : '';
-  return `<tr><td class="cell-id">${safe(doc.id)}</td><td class="cell-title">${pdfBadge}${safe(doc.title)}</td><td>${safe(doc.department)}</td><td><span class="tag">${safe(doc.category)}</span></td><td><span class="stars">${'★'.repeat(doc.importance)}</span></td><td><span class="tag tag-blue">V${doc.currentVersion}</span></td><td><button class="tiny-link" data-open-doc="${safe(doc.id)}">View →</button></td></tr>`;
+  const recentBadge = doc.isRecent3Months ? `<span class="tag tag-mint" title="Added within the last 3 months">Recent</span> ` : '';
+  const createdText = doc.createdAt ? doc.createdAt.split(' ')[0] : 'Uncertain (Legacy)';
+  return `<tr><td class="cell-id">${safe(doc.id)}</td><td class="cell-title">${pdfBadge}${recentBadge}${safe(doc.title)}</td><td>${safe(doc.department)}</td><td><span class="tag">${safe(doc.category)}</span></td><td><span class="stars">${'★'.repeat(doc.importance)}</span></td><td><span class="tag tag-blue">V${doc.currentVersion}</span></td><td><small>${safe(createdText)}</small></td><td><button class="tiny-link" data-open-doc="${safe(doc.id)}">View →</button></td></tr>`;
 }
 
 function empty(title, subtitle) {
@@ -118,11 +129,15 @@ function renderDocuments() {
   const term = el('documentFilter').value.trim().toLowerCase();
   const dept = el('departmentFilter').value;
   const cat = el('categoryFilter').value;
+  const dateF = el('dateFilter') ? el('dateFilter').value : '';
   const matching = documents.filter((d) => (!term || (d.id + ' ' + d.title).toLowerCase().includes(term))
-      && (!dept || d.department === dept) && (!cat || d.category === cat));
-  el('documentCountLabel').textContent = `Showing ${matching.length} of ${documents.length} documents`;
-  el('documentTable').innerHTML = matching.length ? `<table class="data-table"><thead><tr><th>Document ID</th><th>Title</th><th>Department</th><th>Category</th><th>Importance</th><th>Version</th><th></th></tr></thead><tbody>${matching.map(documentRow).join('')}</tbody></table>`
-    : empty('No documents found','Try a different title, department or category.');
+      && (!dept || d.department === dept)
+      && (!cat || d.category === cat)
+      && (dateF !== '3months' || d.isRecent3Months));
+  const countSuffix = dateF === '3months' ? ' (Added in Last 3 Months)' : '';
+  el('documentCountLabel').textContent = `Showing ${matching.length} of ${documents.length} documents${countSuffix}`;
+  el('documentTable').innerHTML = matching.length ? `<table class="data-table"><thead><tr><th>Document ID</th><th>Title</th><th>Department</th><th>Category</th><th>Importance</th><th>Version</th><th>Date Added</th><th></th></tr></thead><tbody>${matching.map(documentRow).join('')}</tbody></table>`
+    : empty('No documents found','Try a different title, department, category or date filter.');
 }
 
 function renderCategories() {
@@ -288,7 +303,8 @@ function showDocument(id) {
         <div><span>Department</span><strong>${safe(doc.department)}</strong></div>
         <div><span>Category</span><strong>${safe(doc.category)}</strong></div>
         <div><span>Importance</span><strong>${doc.importance} / 5</strong></div>
-        <div><span>Keywords</span><strong>${safe(doc.keywords)}</strong></div>
+        <div><span>Date Added</span><strong>${safe(doc.createdAt ? doc.createdAt.split(' ')[0] : 'Uncertain (Legacy record)')}</strong></div>
+        <div class="full-span"><span>Keywords</span><strong>${safe(doc.keywords)}</strong></div>
       </div>
       ${pdfSection}
       <h3>Document Content</h3>
@@ -366,7 +382,10 @@ document.addEventListener('click', async (event) => {
 el('mobileMenu').addEventListener('click', () => el('sidebar').classList.toggle('open'));
 el('dialogClose').addEventListener('click', () => el('documentDialog').close());
 el('documentDialog').addEventListener('click', (e) => { if (e.target === el('documentDialog')) el('documentDialog').close(); });
-['documentFilter','departmentFilter','categoryFilter'].forEach(id => el(id).addEventListener(id === 'documentFilter' ? 'input' : 'change', renderDocuments));
+['documentFilter','departmentFilter','categoryFilter','dateFilter'].forEach(id => {
+  const target = el(id);
+  if (target) target.addEventListener(id === 'documentFilter' ? 'input' : 'change', renderDocuments);
+});
 el('keywordFilter').addEventListener('input', renderIndex);
 document.querySelectorAll('.search-tab').forEach((b) => b.addEventListener('click', () => setSearchType(b.dataset.type)));
 el('searchQuery').addEventListener('input', suggest);
@@ -429,20 +448,32 @@ async function loadActivity() {
 function renderProfile() {
   if (!currentUser) return;
   const name = currentUser.fullName || currentUser.username;
-  const roleTitle = currentUser.role === 'HIGHER_OFFICIAL' ? 'Higher Official' : 'Lower Official / Viewer';
-  const deptTitle = currentUser.department ? currentUser.department : 'All Departments (General)';
+  const isHigher = currentUser.role === 'HIGHER_OFFICIAL';
+  const roleTitle = isHigher ? 'Higher Official' : 'Viewer';
+  const deptTitle = isHigher ? (currentUser.department || 'Unassigned') : 'General / All Departments';
+  const scope = isHigher
+    ? `Departmental Isolation (${currentUser.department || 'Assigned Department'})`
+    : 'Authorized Document Catalogue across all departments (Read/Search/Download)';
+  const perms = isHigher
+    ? `Manage ${currentUser.department || 'assigned'} department documents, upload PDFs, create versions, and review departmental correction requests.`
+    : 'Search, view, and download authorized PDF documents across all departments; submit correction requests (read-only).';
+
   el('profileAvatar').textContent = name.slice(0, 1).toUpperCase();
   el('profileFullName').textContent = name;
   el('profileRoleBadge').textContent = roleTitle;
-  el('profileDeptBadge').textContent = deptTitle;
+  el('profileDeptBadge').textContent = currentUser.department || (isHigher ? 'Unassigned' : 'All Departments');
 
   el('profileFieldFullName').textContent = name;
   el('profileFieldUsername').textContent = currentUser.username;
   el('profileFieldRole').textContent = roleTitle;
   el('profileFieldDept').textContent = deptTitle;
-  el('profileFieldPerms').textContent = currentUser.role === 'HIGHER_OFFICIAL'
-    ? 'Manage ' + (currentUser.department || 'assigned') + ' documents, upload PDFs, approve/reject correction requests'
-    : 'Search documents, view/download authorized PDFs, raise correction requests (read-only)';
+  if (el('profileFieldScope')) {
+    el('profileFieldScope').textContent = scope;
+  }
+  el('profileFieldPerms').textContent = perms;
+  if (el('profileFieldStatus')) {
+    el('profileFieldStatus').textContent = '● Active (Authenticated)';
+  }
 }
 
 // Login form: only the server decides the user role.
@@ -518,6 +549,11 @@ if (regForm) {
     regMsg.className = 'login-error';
     const form = event.target;
     const data = Object.fromEntries(new FormData(form));
+
+    if (!data.password || data.password.length < 12) {
+      regMsg.textContent = 'Password must be at least 12 characters long.';
+      return;
+    }
 
     try {
       const res = await fetch('/api/register', {

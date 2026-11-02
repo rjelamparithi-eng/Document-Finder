@@ -1,83 +1,114 @@
 ================================================================================
-ARAM OFFICE - RAILWAY ONLINE DEPLOYMENT GUIDE
+ARAM OFFICE - DEPLOYMENT AND SETUP GUIDE
+Hosting on Render with Aiven MySQL (or Railway)
 ================================================================================
 
-This project is prepared for 1-click deployment on Railway (https://railway.app)
-with Java 21 and a managed MySQL database service.
+1. PROJECT OVERVIEW
+This guide outlines the deployment steps for the Aram Office Document Finder.
+The production system runs on Render (as a Web Service) with Aiven MySQL
+(as a managed cloud database). It also supports Railway or any standard Docker
+container environment.
 
---------------------------------------------------------------------------------
-STEP 1: PUSH CODE TO GITHUB (OR USE RAILWAY CLI)
---------------------------------------------------------------------------------
-1. Ensure your repository contains all project files including:
+
+2. SOFTWARE REQUIREMENTS
+- A GitHub account and Git installed locally
+- A Render account (https://render.com) or Railway account (https://railway.app)
+- An Aiven account (https://aiven.io) or cloud MySQL instance
+- Java 21 JDK for local testing
+
+
+3. TECHNOLOGIES USED
+- Docker with Eclipse Temurin JDK 21 runtime
+- MySQL 8.x with JDBC Driver (mysql-connector-j-8.4.0.jar)
+- SSL/TLS database connectivity (DatabaseConnection.java handles Aiven certificates)
+- Plain HTTP/REST backend using com.sun.net.httpserver
+
+
+4. HOW TO RUN LOCALLY
+Before deploying online, test the application locally:
+1. Start your local MySQL database (e.g., MariaDB or XAMPP on port 3306).
+2. Open a terminal in the project directory.
+3. Start the server:
+   .\RUN_WEBSITE.bat
+4. Open http://127.0.0.1:8080 in your browser.
+5. Run the test suite:
+   .\RUN_TESTS.bat
+
+
+5. MAIN FEATURES IN CLOUD DEPLOYMENT
+- Containerized startup: Docker automatically builds and runs the Java server.
+- Dynamic port binding: The server reads the $PORT environment variable assigned
+  by Render or Railway (defaults to 8080 if not set).
+- Automatic table initialization: DatabaseConnection.java automatically runs
+  table creation on startup if tables do not exist.
+- Seed data migration: Pre-existing synthetic documents and initial accounts are
+  migrated to MySQL on initial boot.
+- SSL/TLS Support: Aiven SSL connection parameters (sslMode=REQUIRED) are
+  automatically supported.
+
+
+6. DATABASE DETAILS & ENVIRONMENT VARIABLES
+Configure these environment variables in your cloud hosting provider:
+
+Option A (Single Connection URI):
+  MYSQL_URL=mysql://<user>:<password>@<host>:<port>/<dbname>?sslMode=REQUIRED
+
+Option B (Individual Variables):
+  MYSQLHOST=<host>
+  MYSQLPORT=<port>
+  MYSQLUSER=<user>
+  MYSQLPASSWORD=<password>
+  MYSQLDATABASE=<dbname>
+
+Render / Railway also supplies:
+  PORT=<assigned_port>
+
+
+7. STEP-BY-STEP DEPLOYMENT ON RENDER WITH AIVEN MYSQL
+
+Step 1: Set Up Cloud MySQL on Aiven
+1. Log in to Aiven (https://aiven.io) and create a free MySQL service.
+2. Note the Service URI, Host, Port, User, and Password from the dashboard.
+3. Under service settings, ensure public network access is allowed.
+
+Step 2: Push Repository to GitHub
+1. Ensure your repository root has:
    - Dockerfile
    - lib/mysql-connector-j-8.4.0.jar
    - src/
    - web/
    - data/
    - schema.sql
+2. Commit your changes and push to your GitHub repository.
 
-2. Push your project to your GitHub repository.
+Step 3: Create Render Web Service
+1. Log in to Render (https://render.com).
+2. Click "New +" and select "Web Service".
+3. Connect your GitHub repository.
+4. Choose "Docker" as the runtime environment.
+5. In the "Environment Variables" section, add:
+   - Key: MYSQL_URL
+   - Value: <your Aiven MySQL connection string>
+6. Click "Create Web Service".
 
---------------------------------------------------------------------------------
-STEP 2: CREATE A PROJECT & ADD MYSQL ON RAILWAY
---------------------------------------------------------------------------------
-1. Log in to your Railway dashboard at https://railway.app
-2. Click "Create a New Project" (or "New Project").
-3. Select "Provision MySQL".
-   - Railway will provision a private, secure MySQL 8 instance.
-   - MySQL is kept on Railway's private network (no public exposure needed).
+Step 4: Verify Deployment
+1. Monitor the Render deployment logs.
+2. Verify that the build completes and the Java server prints:
+   "ARAM OFFICE - E-GOVERNANCE WEBSITE"
+   "Website running on port: <assigned_port>"
+3. Open the Render provided URL in your browser.
+4. Test login, document search, 3-month filter, and PDF viewing.
 
---------------------------------------------------------------------------------
-STEP 3: DEPLOY THE ARAM OFFICE WEB SERVICE
---------------------------------------------------------------------------------
-1. In the same Railway project canvas, click "+ Create" or "New".
-2. Choose "GitHub Repo" and select your repository.
-3. Railway automatically detects the "Dockerfile" and begins building
-   the Java 21 container with the MySQL JDBC driver.
 
---------------------------------------------------------------------------------
-STEP 4: LINK DATABASE ENVIRONMENT VARIABLES
---------------------------------------------------------------------------------
-1. Click on the deployed Web Service card in Railway.
-2. Go to the "Variables" tab.
-3. Click "New Variable" or "Add Reference".
-4. Reference the MySQL service variables, or Railway automatically provides:
-   - MYSQLHOST
-   - MYSQLPORT
-   - MYSQLUSER
-   - MYSQLPASSWORD
-   - MYSQLDATABASE
-   - MYSQL_URL
-   (Our DatabaseConnection.java automatically reads any of these variables).
-5. Railway also automatically injects the "PORT" variable for the public web port.
-
---------------------------------------------------------------------------------
-STEP 5: GENERATE PUBLIC DOMAIN
---------------------------------------------------------------------------------
-1. In the Web Service, navigate to "Settings" > "Networking".
-2. Click "Generate Domain" (e.g. aram-office-production.up.railway.app).
-3. Railway provides free SSL/HTTPS encryption on this public domain.
-
---------------------------------------------------------------------------------
-STEP 6: AUTOMATIC STARTUP & MIGRATION
---------------------------------------------------------------------------------
-1. When the container starts:
-   - WebServer binds to 0.0.0.0 on Railway's assigned $PORT.
-   - DatabaseConnection initializes all 6 tables automatically if not present.
-   - Initial accounts and documents are migrated into MySQL on first boot.
-2. Open the public domain in your browser.
-3. Log in with your Higher Official or Lower Official account:
-   - Higher Official: username "higher"
-   - Lower Official : username "viewer"
-
---------------------------------------------------------------------------------
-LOCAL EXECUTION (FOR LOCAL TESTING & GRADING)
---------------------------------------------------------------------------------
-To run locally:
-1. Ensure MySQL (e.g., XAMPP) is running on 127.0.0.1:3306.
-2. Double-click or run:
-   .\RUN_WEBSITE.bat
-3. Open http://127.0.0.1:8080 in your browser.
-4. To run tests:
-   .\RUN_TESTS.bat
+8. TROUBLESHOOTING
+- Database connection failure:
+  Verify the MySQL host, port, user, and password. For Aiven, check that SSL
+  is enabled (?sslMode=REQUIRED).
+- Session expired message:
+  If inactive or if cookies are cleared, the system redirects to login. Sign in
+  again with valid credentials.
+- Higher Official provisioning:
+  Public registration creates Viewer accounts. Higher Official accounts must be
+  provisioned using the local AdminProvisioner tool (or direct database insert)
+  to ensure strict departmental controls.
 ================================================================================

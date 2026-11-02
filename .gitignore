@@ -1,8 +1,10 @@
-backup_original/
-backup_before_profile_upgrade/
 out/
-data/
 *.class
+data/
+backup_*/
+*.bak
 .env
 .env.*
 *.log
+.DS_Store
+Thumbs.db

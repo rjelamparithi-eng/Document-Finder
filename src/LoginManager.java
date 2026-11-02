@@ -297,8 +297,8 @@ public class LoginManager {
         if (!username.matches("^[a-zA-Z0-9_-]{3,30}$")) {
             return "Username must be 3 to 30 characters (letters, numbers, underscore, hyphen).";
         }
-        if (password == null || password.length() < 6) {
-            return "Password must be at least 6 characters long.";
+        if (password == null || password.length() < 12) {
+            return "Password must be at least 12 characters long.";
         }
         if (fullName == null || fullName.trim().isEmpty() || fullName.trim().length() > 100) {
             return "Full name is required (up to 100 characters).";
@@ -370,8 +370,8 @@ public class LoginManager {
         if (!username.matches("^[a-zA-Z0-9_-]{3,30}$")) {
             return "Username must be 3 to 30 characters (letters, numbers, underscore, hyphen).";
         }
-        if (password == null || password.length() < 6) {
-            return "Password must be at least 6 characters long.";
+        if (password == null || password.length() < 12) {
+            return "Password must be at least 12 characters long.";
         }
         if (fullName == null || fullName.trim().isEmpty() || fullName.trim().length() > 100) {
             return "Full name is required (up to 100 characters).";

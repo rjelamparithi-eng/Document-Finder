@@ -86,25 +86,31 @@ public class TestProfileUpgrade {
             // -----------------------------------------------------------------
             // VERIFICATION 2: New viewer registration works
             // -----------------------------------------------------------------
-            String regData1 = "username=test_viewer_alice&password=password123&fullName=Alice+Smith&department=Revenue";
+            String shortPassData = "username=test_viewer_short&password=shortpass&fullName=Short+Pass&department=Revenue";
+            Response shortPassRes = httpPostForm(baseUrl + "/api/register", shortPassData, null, null);
+            boolean shortPassRejected = shortPassRes.statusCode == 400
+                    && shortPassRes.bodyString().contains("at least 12 characters");
+
+            String regData1 = "username=test_viewer_alice&password=password123456&fullName=Alice+Smith&department=Revenue";
             Response regRes1 = httpPostForm(baseUrl + "/api/register", regData1, null, null);
             boolean reg1Success = regRes1.statusCode == 201;
 
-            Response loginAlice = httpPostForm(baseUrl + "/api/login", "username=test_viewer_alice&password=password123", null, null);
+            Response loginAlice = httpPostForm(baseUrl + "/api/login", "username=test_viewer_alice&password=password123456", null, null);
             boolean aliceOk = loginAlice.statusCode == 200
                     && loginAlice.bodyString().contains("\"role\":\"LOWER_OFFICIAL\"")
                     && loginAlice.bodyString().contains("Alice Smith")
                     && loginAlice.bodyString().contains("\"department\":\"Revenue\"");
             String aliceCookie = loginAlice.cookie;
             String aliceCsrf = extractJsonString(loginAlice.bodyString(), "csrf");
-            check("2. New viewer registration works (assigns LOWER_OFFICIAL, profile data)", reg1Success && aliceOk);
+            check("2. New viewer registration works (enforces >= 12 char password, assigns LOWER_OFFICIAL)",
+                    shortPassRejected && reg1Success && aliceOk);
 
             // -----------------------------------------------------------------
             // VERIFICATION 3: Multiple viewers can register
             // -----------------------------------------------------------------
-            String regData2 = "username=test_viewer_bob&password=password456&fullName=Bob+Jones&department=";
+            String regData2 = "username=test_viewer_bob&password=password123456&fullName=Bob+Jones&department=";
             Response regRes2 = httpPostForm(baseUrl + "/api/register", regData2, null, null);
-            Response loginBob = httpPostForm(baseUrl + "/api/login", "username=test_viewer_bob&password=password456", null, null);
+            Response loginBob = httpPostForm(baseUrl + "/api/login", "username=test_viewer_bob&password=password123456", null, null);
             boolean bobOk = regRes2.statusCode == 201
                     && loginBob.statusCode == 200
                     && loginBob.bodyString().contains("\"role\":\"LOWER_OFFICIAL\"")
@@ -115,9 +121,9 @@ public class TestProfileUpgrade {
             // VERIFICATION 4: Duplicate usernames are rejected
             // -----------------------------------------------------------------
             Response dupReg1 = httpPostForm(baseUrl + "/api/register",
-                    "username=test_viewer_alice&password=differentPass&fullName=Alice+Duplicate&department=Health", null, null);
+                    "username=test_viewer_alice&password=differentPass123&fullName=Alice+Duplicate&department=Health", null, null);
             Response dupReg2 = httpPostForm(baseUrl + "/api/register",
-                    "username=higher&password=differentPass&fullName=Higher+Dup&department=Revenue", null, null);
+                    "username=higher&password=differentPass123&fullName=Higher+Dup&department=Revenue", null, null);
             boolean dupRejected = dupReg1.statusCode == 400
                     && dupReg1.bodyString().contains("already registered")
                     && dupReg2.statusCode == 400;
@@ -126,12 +132,16 @@ public class TestProfileUpgrade {
             // -----------------------------------------------------------------
             // VERIFICATION 5: Only one active Higher Official can exist per department
             // -----------------------------------------------------------------
-            // Health already has 'higher'. Try provisioning another for Health.
-            Response dupHigherAttempt = httpPostForm(baseUrl + "/api/provision-higher",
-                    "username=test_higher_health2&password=password123&fullName=Another+Health+Officer&department=Health",
+            // Check that /api/provision-higher is not an exposed public HTTP route (returns 404)
+            Response unexposedEndpoint = httpPostForm(baseUrl + "/api/provision-higher",
+                    "username=test_higher_health2&password=password123456&fullName=Another+Health+Officer&department=Health",
                     higherCookie, higherCsrf);
-            boolean dupHigherBlocked = dupHigherAttempt.statusCode == 400
-                    && dupHigherAttempt.bodyString().contains("already exists for department: Health");
+            boolean endpointProtected = unexposedEndpoint.statusCode == 404;
+
+            // Direct admin provisioning prevents duplicate for Health (already has 'higher'):
+            LoginManager loginMgr = new LoginManager();
+            String dupHealthErr = loginMgr.provisionHigherOfficial("test_higher_health2", "password123456", "Another Health Officer", "Health");
+            boolean dupHigherBlocked = dupHealthErr != null && dupHealthErr.contains("already exists for department: Health");
 
             // Database constraint check: attempting direct DB insert of duplicate active higher official for Health
             boolean dbConstraintFired = false;
@@ -148,20 +158,16 @@ public class TestProfileUpgrade {
                 }
             }
 
-            // Provisioning an unoccupied department (Education) succeeds
-            Response provEdu = httpPostForm(baseUrl + "/api/provision-higher",
-                    "username=test_higher_edu&password=password123&fullName=Edu+Official&department=Education",
-                    higherCookie, higherCsrf);
-            boolean provEduOk = provEdu.statusCode == 201;
+            // Provisioning an unoccupied department (Education) succeeds via admin provisioning
+            String provEduErr = loginMgr.provisionHigherOfficial("test_higher_edu", "password123456", "Edu Official", "Education");
+            boolean provEduOk = provEduErr == null;
 
             // Attempting second higher official for Education is blocked
-            Response dupEduAttempt = httpPostForm(baseUrl + "/api/provision-higher",
-                    "username=test_higher_edu2&password=password123&fullName=Edu+Official2&department=Education",
-                    higherCookie, higherCsrf);
-            boolean dupEduBlocked = dupEduAttempt.statusCode == 400;
+            String dupEduErr = loginMgr.provisionHigherOfficial("test_higher_edu2", "password123456", "Edu Official2", "Education");
+            boolean dupEduBlocked = dupEduErr != null && dupEduErr.contains("already exists for department: Education");
 
-            check("5. Only one active Higher Official per department (backend + DB constraint enforced)",
-                    dupHigherBlocked && dbConstraintFired && provEduOk && dupEduBlocked);
+            check("5. Only one active Higher Official per department (admin-only provisioning + DB constraint)",
+                    endpointProtected && dupHigherBlocked && dbConstraintFired && provEduOk && dupEduBlocked);
 
             // -----------------------------------------------------------------
             // VERIFICATION 6: Higher Official cannot modify another department's documents
@@ -299,6 +305,21 @@ public class TestProfileUpgrade {
 
             check("10. Search, version history, and correction workflow still work end-to-end",
                     searchOk && reqCreated && reviewOk);
+
+            // -----------------------------------------------------------------
+            // VERIFICATION 11: Recent documents filter (Last 3 Months) works
+            // -----------------------------------------------------------------
+            Response recentDocsRes = httpGet(baseUrl + "/api/documents?recent=3months", aliceCookie);
+            boolean recentDocsOk = recentDocsRes.statusCode == 200
+                    && recentDocsRes.bodyString().contains("\"isRecent3Months\":true");
+            check("11. Recent documents filter (Last 3 Months) returns matching records", recentDocsOk);
+
+            // -----------------------------------------------------------------
+            // VERIFICATION 12: Session expiration handling (401 on invalid/expired session)
+            // -----------------------------------------------------------------
+            Response expiredSessionRes = httpGet(baseUrl + "/api/me", "ARAM_SESSION=invalid_or_expired_token_12345");
+            boolean sessionExpirationOk = expiredSessionRes.statusCode == 401;
+            check("12. Expired or invalid session returns HTTP 401 redirecting to login", sessionExpirationOk);
 
         } finally {
             // Clean up test users

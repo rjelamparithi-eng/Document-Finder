@@ -8,6 +8,7 @@ public class GovernmentDocument {
     private int importance;
     private ArrayList<DocumentVersion> versions;
     private int currentVersion; // version numbers start at 1
+    private String createdAt; // document creation timestamp from database
 
     public GovernmentDocument(String id, String title, String department,
                               String category, int importance,
@@ -38,6 +39,28 @@ public class GovernmentDocument {
     public String getPdfFilename() { return getCurrentVersion().getPdfFilename(); }
     public int getPdfSize() { return getCurrentVersion().getPdfSize(); }
     public boolean hasPdf() { return getCurrentVersion().hasPdf(); }
+    public String getCreatedAt() { return createdAt; }
+    public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
+
+    // Checks if this document was created in the last 3 calendar months.
+    // Accurately uses documents.created_at (not version-update date).
+    // Includes records created exactly at the 3-month boundary.
+    public boolean isCreatedInLastThreeMonths() {
+        if (createdAt == null || createdAt.trim().isEmpty()) {
+            return false;
+        }
+        try {
+            String datePart = createdAt.trim();
+            if (datePart.length() >= 10) {
+                datePart = datePart.substring(0, 10);
+            }
+            java.time.LocalDate created = java.time.LocalDate.parse(datePart);
+            java.time.LocalDate cutoff = java.time.LocalDate.now().minusMonths(3);
+            return !created.isBefore(cutoff);
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
     // Used to show all past versions on the website.
     public ArrayList<DocumentVersion> getAllVersions() {

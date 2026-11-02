@@ -267,28 +267,7 @@ public class WebServer {
                 return;
             }
 
-            // Administrative provisioning for Higher Official accounts
-            if (method.equals("POST") && path.equals("/api/provision-higher")) {
-                if (!user.role.equals("HIGHER_OFFICIAL")) {
-                    sendJson(ex, 403, result(false, "Only an authorized Higher Official can provision accounts.", null));
-                    return;
-                }
-                String username = input.getOrDefault("username", "").trim();
-                String password = input.getOrDefault("password", "");
-                String fullName = input.getOrDefault("fullName", "").trim();
-                String department = input.getOrDefault("department", "").trim();
-
-                String error = logins.provisionHigherOfficial(username, password, fullName, department);
-                if (error != null) {
-                    sendJson(ex, 400, result(false, error, null));
-                    return;
-                }
-                correctionManager.addActivity(user.username, "OFFICIAL_PROVISIONED", department,
-                        "Provisioned Higher Official account '" + username + "' for " + department);
-                CorrectionRequestStorage.save(correctionManager);
-                sendJson(ex, 201, result(true, "Higher Official account for " + department + " provisioned successfully.", null));
-                return;
-            }
+            // Higher Official accounts are provisioned via local administrative tool (AdminProvisioner)
 
             if (method.equals("GET") && path.equals("/api/correction-requests")) {
                 ArrayList<Object> rows = new ArrayList<Object>();
@@ -342,8 +321,14 @@ public class WebServer {
             }
 
             if (method.equals("GET") && path.equals("/api/documents")) {
+                String recentFilter = input.getOrDefault("recent", "").trim();
+                boolean onlyRecent = "3months".equalsIgnoreCase(recentFilter) || "true".equalsIgnoreCase(recentFilter);
                 ArrayList<Object> docs = new ArrayList<Object>();
-                for (GovernmentDocument doc : manager.getAllDocuments()) docs.add(documentToMap(doc));
+                for (GovernmentDocument doc : manager.getAllDocuments()) {
+                    if (!onlyRecent || doc.isCreatedInLastThreeMonths()) {
+                        docs.add(documentToMap(doc));
+                    }
+                }
                 sendJson(ex, 200, result(true, "", docs));
                 return;
             }
@@ -667,6 +652,8 @@ public class WebServer {
         row.put("hasPdf", doc.hasPdf());
         row.put("pdfFilename", doc.getPdfFilename() != null ? doc.getPdfFilename() : "");
         row.put("pdfSize", doc.getPdfSize());
+        row.put("createdAt", doc.getCreatedAt() != null ? doc.getCreatedAt() : "");
+        row.put("isRecent3Months", doc.isCreatedInLastThreeMonths());
         return row;
     }
 

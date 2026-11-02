@@ -145,7 +145,7 @@ public class DocumentStorage {
     }
 
     private static boolean loadFromDatabase(Connection conn, DocumentManager manager) throws SQLException {
-        String queryDocs = "SELECT document_id, department, category, importance, current_version FROM documents ORDER BY document_id";
+        String queryDocs = "SELECT document_id, department, category, importance, current_version, created_at FROM documents ORDER BY document_id";
         String queryVers = "SELECT version_number, title, keywords, content, pdf_filename, pdf_size FROM document_versions WHERE document_id = ? ORDER BY version_number ASC";
 
         ArrayList<GovernmentDocument> loadedList = new ArrayList<GovernmentDocument>();
@@ -159,6 +159,7 @@ public class DocumentStorage {
                 String cat = rsDocs.getString("category");
                 int importance = rsDocs.getInt("importance");
                 int currentVer = rsDocs.getInt("current_version");
+                java.sql.Timestamp createdAtTs = rsDocs.getTimestamp("created_at");
 
                 GovernmentDocument doc = null;
 
@@ -183,6 +184,9 @@ public class DocumentStorage {
 
                 if (doc != null) {
                     doc.setCurrentVersion(currentVer);
+                    if (createdAtTs != null) {
+                        doc.setCreatedAt(createdAtTs.toString());
+                    }
                     loadedList.add(doc);
                 }
             }
@@ -268,6 +272,9 @@ public class DocumentStorage {
                 updateKeywordsInDb(conn, doc.getDocumentId(), doc.getKeywords());
 
                 conn.commit();
+                if (doc.getCreatedAt() == null || doc.getCreatedAt().isEmpty()) {
+                    doc.setCreatedAt(new java.sql.Timestamp(System.currentTimeMillis()).toString());
+                }
             } catch (SQLException e) {
                 conn.rollback();
                 throw e;
