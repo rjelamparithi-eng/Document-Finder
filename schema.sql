@@ -12,7 +12,12 @@ CREATE TABLE IF NOT EXISTS users (
     role VARCHAR(50) NOT NULL,
     salt VARCHAR(100) NOT NULL,
     password_hash VARCHAR(100) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    full_name VARCHAR(100) NOT NULL DEFAULT '',
+    department VARCHAR(100) NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    higher_official_dept VARCHAR(100) GENERATED ALWAYS AS (CASE WHEN role = 'HIGHER_OFFICIAL' AND is_active = 1 THEN department ELSE NULL END) VIRTUAL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE INDEX uq_higher_official_dept (higher_official_dept)
 );
 
 -- 2. Documents and metadata

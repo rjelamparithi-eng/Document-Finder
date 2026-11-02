@@ -12,15 +12,44 @@
   <div id="loginScreen" class="login-screen">
     <div class="login-card">
       <div class="brand-mark">A</div>
-      <h1>Aram Office Login</h1>
-      <p>Sign in as Higher Official or Lower Official.</p>
-      <form id="loginForm">
-        <label>Username<input name="username" autocomplete="username" required></label>
-        <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
-        <p id="loginMessage" class="login-error" role="alert"></p>
-        <button class="button button-primary" type="submit">Sign In</button>
-      </form>
-      <small>Demo usernames: higher / viewer. First-run passwords are shown in the Java terminal.</small>
+      <div class="auth-tabs" role="tablist">
+        <button type="button" class="auth-tab active" id="tabLogin" role="tab" aria-selected="true">Sign In</button>
+        <button type="button" class="auth-tab" id="tabRegister" role="tab" aria-selected="false">Sign Up (Viewer)</button>
+      </div>
+
+      <div id="loginView">
+        <h1>Aram Office Login</h1>
+        <p>Sign in with your official account credentials.</p>
+        <form id="loginForm">
+          <label>Username<input name="username" autocomplete="username" required placeholder="Enter username"></label>
+          <label>Password<input name="password" type="password" autocomplete="current-password" required placeholder="Enter password"></label>
+          <p id="loginMessage" class="login-error" role="alert"></p>
+          <button class="button button-primary" type="submit">Sign In</button>
+        </form>
+        <small>Official portal for Higher Officials and Public Viewers.</small>
+      </div>
+
+      <div id="registerView" hidden>
+        <h1>Viewer Registration</h1>
+        <p>Create a viewer account to search and download documents.</p>
+        <form id="registerForm">
+          <label>Full Name<input name="fullName" required placeholder="e.g. Anand Kumar"></label>
+          <label>Username<input name="username" required placeholder="Choose a username" autocomplete="username"></label>
+          <label>Password<input name="password" type="password" required placeholder="At least 6 characters" autocomplete="new-password"></label>
+          <label>Department (Optional)
+            <select name="department">
+              <option value="">General / All Departments</option>
+              <option value="Revenue">Revenue</option>
+              <option value="Health">Health</option>
+              <option value="Education">Education</option>
+              <option value="Public Works">Public Works</option>
+            </select>
+          </label>
+          <p id="registerMessage" class="login-error" role="alert"></p>
+          <button class="button button-primary" type="submit">Create Account</button>
+        </form>
+        <small>Viewer accounts are assigned LOWER_OFFICIAL role by the server.</small>
+      </div>
     </div>
   </div>
   <div class="layout" id="workspace" hidden>
@@ -36,6 +65,7 @@
         <button class="nav-link" data-page="index"><span class="nav-icon">#</span> Keyword Index</button>
         <button class="nav-link" data-page="requests"><span class="nav-icon">✎</span> Correction Requests</button>
         <button class="nav-link higher-only" data-page="activity"><span class="nav-icon">↺</span> Activity Log</button>
+        <button class="nav-link" data-page="profile"><span class="nav-icon">👤</span> My Profile</button>
         <div class="nav-separator"></div>
         <button class="nav-link nav-add" data-page="add"><span class="nav-icon">＋</span> Add Document</button>
       </nav>
@@ -97,6 +127,28 @@
         <section class="page higher-only" id="page-activity">
           <div class="page-heading"><div><div class="eyebrow dark">ACCOUNTABILITY</div><h1>Activity Log</h1><p>Actions recorded by the Java server.</p></div></div>
           <div class="panel form-panel"><div class="table-wrap" id="activityList"></div></div>
+        </section>
+
+        <section class="page" id="page-profile">
+          <div class="page-heading"><div><div class="eyebrow dark">USER PROFILE</div><h1>Official Profile</h1><p>Your authenticated account details and departmental access privileges.</p></div></div>
+          <div class="panel form-panel">
+            <div class="profile-header">
+              <div class="profile-avatar" id="profileAvatar">👤</div>
+              <div>
+                <h2 id="profileFullName" style="margin: 0 0 6px;">—</h2>
+                <span class="tag tag-blue" id="profileRoleBadge">—</span>
+                <span class="tag" id="profileDeptBadge">—</span>
+              </div>
+            </div>
+            <div class="details-grid" style="margin-top: 24px;">
+              <div><span>Full Name</span><strong id="profileFieldFullName">—</strong></div>
+              <div><span>Username</span><strong id="profileFieldUsername">—</strong></div>
+              <div><span>Official Role</span><strong id="profileFieldRole">—</strong></div>
+              <div><span>Department</span><strong id="profileFieldDept">—</strong></div>
+              <div><span>Permissions</span><strong id="profileFieldPerms">—</strong></div>
+              <div><span>Account Status</span><strong style="color: #269774;">● Active</strong></div>
+            </div>
+          </div>
         </section>
 
         <section class="page" id="page-add">

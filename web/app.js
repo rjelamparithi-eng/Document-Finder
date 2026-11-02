@@ -52,7 +52,7 @@ function page(name) {
   }
   document.querySelectorAll('.page').forEach((section) => section.classList.toggle('active', section.id === 'page-' + name));
   document.querySelectorAll('.nav-link').forEach((link) => link.classList.toggle('active', link.dataset.page === name));
-  const titles = {dashboard:'Overview',documents:'All Documents',search:'Search Documents',categories:'Departments',versions:'Version History',index:'Keyword Index',add:'Add Document',requests:'Correction Requests',activity:'Activity Log'};
+  const titles = {dashboard:'Overview',documents:'All Documents',search:'Search Documents',categories:'Departments',versions:'Version History',index:'Keyword Index',add:'Add Document',requests:'Correction Requests',activity:'Activity Log',profile:'My Profile'};
   el('breadcrumb').textContent = titles[name] || name;
   el('sidebar').classList.remove('open');
   window.scrollTo({top:0,behavior:'smooth'});
@@ -60,6 +60,7 @@ function page(name) {
   if (name === 'requests') loadRequests();
   if (name === 'activity') loadActivity();
   if (name === 'versions') renderVersionPicker();
+  if (name === 'profile') renderProfile();
 }
 
 function documentRow(doc) {
@@ -425,12 +426,33 @@ async function loadActivity() {
   } catch (error) { toast(error.message, true); }
 }
 
+function renderProfile() {
+  if (!currentUser) return;
+  const name = currentUser.fullName || currentUser.username;
+  const roleTitle = currentUser.role === 'HIGHER_OFFICIAL' ? 'Higher Official' : 'Lower Official / Viewer';
+  const deptTitle = currentUser.department ? currentUser.department : 'All Departments (General)';
+  el('profileAvatar').textContent = name.slice(0, 1).toUpperCase();
+  el('profileFullName').textContent = name;
+  el('profileRoleBadge').textContent = roleTitle;
+  el('profileDeptBadge').textContent = deptTitle;
+
+  el('profileFieldFullName').textContent = name;
+  el('profileFieldUsername').textContent = currentUser.username;
+  el('profileFieldRole').textContent = roleTitle;
+  el('profileFieldDept').textContent = deptTitle;
+  el('profileFieldPerms').textContent = currentUser.role === 'HIGHER_OFFICIAL'
+    ? 'Manage ' + (currentUser.department || 'assigned') + ' documents, upload PDFs, approve/reject correction requests'
+    : 'Search documents, view/download authorized PDFs, raise correction requests (read-only)';
+}
+
 // Login form: only the server decides the user role.
 function showWorkspace(user) {
   currentUser = user;
   csrfToken = user.csrf;
-  el('loggedUser').textContent = user.username + ' (' +
-      (user.role === 'HIGHER_OFFICIAL' ? 'Higher Official' : 'Lower Official') + ')';
+  const displayName = user.fullName || user.username;
+  const roleText = user.role === 'HIGHER_OFFICIAL' ? 'Higher Official' : 'Viewer';
+  const deptText = user.department ? ' · ' + user.department : '';
+  el('loggedUser').textContent = displayName + ' (' + roleText + deptText + ')';
   el('workspace').classList.toggle('viewer', user.role === 'LOWER_OFFICIAL');
   el('workspace').classList.toggle('higher', user.role === 'HIGHER_OFFICIAL');
   el('workspace').hidden = false;
@@ -442,10 +464,38 @@ function showLogin() {
   csrfToken = '';
   el('workspace').hidden = true;
   el('loginScreen').hidden = false;
+  switchAuthTab('login');
 }
+
+function switchAuthTab(tab) {
+  const isLogin = tab === 'login';
+  const tabLog = el('tabLogin');
+  const tabReg = el('tabRegister');
+  if (tabLog && tabReg) {
+    tabLog.classList.toggle('active', isLogin);
+    tabReg.classList.toggle('active', !isLogin);
+    tabLog.setAttribute('aria-selected', isLogin);
+    tabReg.setAttribute('aria-selected', !isLogin);
+  }
+  const logView = el('loginView');
+  const regView = el('registerView');
+  if (logView) logView.hidden = !isLogin;
+  if (regView) regView.hidden = isLogin;
+  if (el('loginMessage')) el('loginMessage').textContent = '';
+  if (el('registerMessage')) {
+    el('registerMessage').textContent = '';
+    el('registerMessage').className = 'login-error';
+  }
+}
+
+const tabLogBtn = el('tabLogin');
+if (tabLogBtn) tabLogBtn.addEventListener('click', () => switchAuthTab('login'));
+const tabRegBtn = el('tabRegister');
+if (tabRegBtn) tabRegBtn.addEventListener('click', () => switchAuthTab('register'));
 
 el('loginForm').addEventListener('submit', async (event) => {
   event.preventDefault();
+  el('loginMessage').className = 'login-error';
   el('loginMessage').textContent = '';
   const form = event.target;
   try {
@@ -458,6 +508,40 @@ el('loginForm').addEventListener('submit', async (event) => {
     el('loginMessage').textContent = error.message;
   }
 });
+
+const regForm = el('registerForm');
+if (regForm) {
+  regForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const regMsg = el('registerMessage');
+    regMsg.textContent = '';
+    regMsg.className = 'login-error';
+    const form = event.target;
+    const data = Object.fromEntries(new FormData(form));
+
+    try {
+      const res = await fetch('/api/register', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: new URLSearchParams(data).toString()
+      });
+      const body = await res.json();
+      if (!res.ok || !body.success) {
+        throw new Error(body.message || 'Registration failed.');
+      }
+      toast('Registration successful! Please sign in.');
+      form.reset();
+      switchAuthTab('login');
+      const loginUser = el('loginForm').elements['username'];
+      if (loginUser) loginUser.value = data.username || '';
+      el('loginMessage').className = 'login-success';
+      el('loginMessage').textContent = 'Account created successfully! Please enter your password to sign in.';
+    } catch (error) {
+      regMsg.className = 'login-error';
+      regMsg.textContent = error.message;
+    }
+  });
+}
 
 el('logoutButton').addEventListener('click', async () => {
   try { await api('/api/logout', {}); }
@@ -474,3 +558,4 @@ async function startWebsite() {
 }
 
 startWebsite();
+

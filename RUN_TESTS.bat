@@ -20,11 +20,21 @@ if errorlevel 1 (
 )
 echo.
 echo =========================================
-echo [2/2] RUNNING MYSQL & PDF UPGRADE TESTS...
+echo [2/3] RUNNING MYSQL & PDF UPGRADE TESTS...
 echo =========================================
 java -cp "out;lib\*" TestReview2Upgrades
 if errorlevel 1 (
     echo Upgrade tests failed.
+    pause
+    exit /b 1
+)
+echo.
+echo =========================================
+echo [3/3] RUNNING PROFILE UPGRADE TESTS...
+echo =========================================
+java -cp "out;lib\*" TestProfileUpgrade
+if errorlevel 1 (
+    echo Profile tests failed.
     pause
     exit /b 1
 )

@@ -35,6 +35,15 @@ public class CorrectionRequestManager {
         return false;
     }
 
+    public CorrectionRequest getRequest(int id) {
+        for (CorrectionRequest request : requests) {
+            if (request.id == id) {
+                return request;
+            }
+        }
+        return null;
+    }
+
     public ArrayList<CorrectionRequest> requestsFor(String username, boolean higherOfficial) {
         ArrayList<CorrectionRequest> result = new ArrayList<CorrectionRequest>();
         for (CorrectionRequest request : requests) {

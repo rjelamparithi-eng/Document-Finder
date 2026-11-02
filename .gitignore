@@ -1,0 +1,8 @@
+backup_original/
+backup_before_profile_upgrade/
+out/
+data/
+*.class
+.env
+.env.*
+*.log

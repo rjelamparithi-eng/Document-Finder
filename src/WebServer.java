@@ -128,6 +128,26 @@ public class WebServer {
                 return;
             }
 
+            // Public registration for Lower Official / Viewer accounts
+            if (path.equals("/api/register") && method.equals("POST")) {
+                if (!sameOrigin(ex)) {
+                    sendJson(ex, 403, result(false, "Invalid request origin.", null));
+                    return;
+                }
+                String username = input.getOrDefault("username", "").trim();
+                String password = input.getOrDefault("password", "");
+                String fullName = input.getOrDefault("fullName", "").trim();
+                String department = input.getOrDefault("department", "").trim();
+
+                String error = logins.registerViewer(username, password, fullName, department);
+                if (error != null) {
+                    sendJson(ex, 400, result(false, error, null));
+                    return;
+                }
+                sendJson(ex, 201, result(true, "Registration successful. You can now log in.", null));
+                return;
+            }
+
             LoginManager.LoginSession user = logins.getSession(ex);
             if (user == null) {
                 sendJson(ex, 401, result(false, "Please log in first.", null));
@@ -223,12 +243,50 @@ public class WebServer {
                     sendJson(ex, 400, result(false, "Enter valid request, decision and remarks.", null));
                     return;
                 }
+
+                // Department enforcement: Higher Official can only review requests for their department
+                CorrectionRequest req = correctionManager.getRequest(id);
+                if (req == null) {
+                    sendJson(ex, 404, result(false, "Request not found.", null));
+                    return;
+                }
+                GovernmentDocument targetDoc = manager.searchById(req.documentId);
+                if (targetDoc != null && user.department != null && !user.department.isEmpty()) {
+                    if (!targetDoc.getDepartment().equalsIgnoreCase(user.department)) {
+                        sendJson(ex, 403, result(false, "Access denied: You can only review requests for documents in your department (" + user.department + ").", null));
+                        return;
+                    }
+                }
+
                 if (!correctionManager.review(id, decision, remarks, user.username)) {
                     sendJson(ex, 409, result(false, "Request not found or already reviewed.", null));
                     return;
                 }
                 CorrectionRequestStorage.save(correctionManager);
                 sendJson(ex, 200, result(true, "Request " + decision.toLowerCase() + ". Document unchanged.", null));
+                return;
+            }
+
+            // Administrative provisioning for Higher Official accounts
+            if (method.equals("POST") && path.equals("/api/provision-higher")) {
+                if (!user.role.equals("HIGHER_OFFICIAL")) {
+                    sendJson(ex, 403, result(false, "Only an authorized Higher Official can provision accounts.", null));
+                    return;
+                }
+                String username = input.getOrDefault("username", "").trim();
+                String password = input.getOrDefault("password", "");
+                String fullName = input.getOrDefault("fullName", "").trim();
+                String department = input.getOrDefault("department", "").trim();
+
+                String error = logins.provisionHigherOfficial(username, password, fullName, department);
+                if (error != null) {
+                    sendJson(ex, 400, result(false, error, null));
+                    return;
+                }
+                correctionManager.addActivity(user.username, "OFFICIAL_PROVISIONED", department,
+                        "Provisioned Higher Official account '" + username + "' for " + department);
+                CorrectionRequestStorage.save(correctionManager);
+                sendJson(ex, 201, result(true, "Higher Official account for " + department + " provisioned successfully.", null));
                 return;
             }
 
@@ -376,6 +434,15 @@ public class WebServer {
                     sendJson(ex, 400, result(false, "Fill all fields and use importance 1 to 5 and valid keywords.", null));
                     return;
                 }
+
+                // Department restriction: Higher Official can only create documents for their assigned department
+                if (user.department != null && !user.department.isEmpty()) {
+                    if (!department.equalsIgnoreCase(user.department)) {
+                        sendJson(ex, 403, result(false, "Access denied: You can only register documents for your assigned department (" + user.department + ").", null));
+                        return;
+                    }
+                }
+
                 if (manager.searchById(id) != null) {
                     sendJson(ex, 409, result(false, "Document ID already exists.", null));
                     return;
@@ -424,6 +491,14 @@ public class WebServer {
                 if (doc == null) {
                     sendJson(ex, 404, result(false, "Document not found.", null));
                     return;
+                }
+
+                // Department restriction: Higher Official can only modify documents for their assigned department
+                if (user.department != null && !user.department.isEmpty()) {
+                    if (!doc.getDepartment().equalsIgnoreCase(user.department)) {
+                        sendJson(ex, 403, result(false, "Access denied: You can only modify documents belonging to your assigned department (" + user.department + ").", null));
+                        return;
+                    }
                 }
 
                 String title = input.getOrDefault("title", "").trim();
@@ -476,6 +551,14 @@ public class WebServer {
                     return;
                 }
 
+                // Department restriction: Higher Official can only upload files for documents in their assigned department
+                if (user.department != null && !user.department.isEmpty()) {
+                    if (!doc.getDepartment().equalsIgnoreCase(user.department)) {
+                        sendJson(ex, 403, result(false, "Access denied: You can only upload files for documents in your assigned department (" + user.department + ").", null));
+                        return;
+                    }
+                }
+
                 MultipartRequest.FileItem pdfFile = (multipart != null) ? multipart.getFiles().get("pdf") : null;
                 if (pdfFile == null && multipart != null && !multipart.getFiles().isEmpty()) {
                     pdfFile = multipart.getFiles().values().iterator().next();
@@ -516,6 +599,15 @@ public class WebServer {
                     sendJson(ex, 404, result(false, "Document not found.", null));
                     return;
                 }
+
+                // Department restriction: Higher Official can only change versions for documents in their assigned department
+                if (user.department != null && !user.department.isEmpty()) {
+                    if (!doc.getDepartment().equalsIgnoreCase(user.department)) {
+                        sendJson(ex, 403, result(false, "Access denied: You can only modify documents in your assigned department (" + user.department + ").", null));
+                        return;
+                    }
+                }
+
                 int verNum = parseNumber(input.get("version"));
                 boolean changed = manager.switchVersion(id, verNum);
                 if (!changed) {
@@ -546,6 +638,8 @@ public class WebServer {
         Map<String, Object> data = new LinkedHashMap<String, Object>();
         data.put("username", user.username);
         data.put("role", user.role);
+        data.put("fullName", user.fullName);
+        data.put("department", user.department);
         data.put("csrf", user.csrf);
         return data;
     }

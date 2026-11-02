@@ -77,9 +77,51 @@ public class DatabaseConnection {
             st.execute("CREATE TABLE IF NOT EXISTS users ("
                     + "username VARCHAR(50) PRIMARY KEY, "
                     + "role VARCHAR(50) NOT NULL, "
+                    + "full_name VARCHAR(100) NULL, "
+                    + "department VARCHAR(100) NULL, "
+                    + "is_active BOOLEAN NOT NULL DEFAULT 1, "
                     + "salt VARCHAR(100) NOT NULL, "
                     + "password_hash VARCHAR(100) NOT NULL, "
                     + "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
+
+            // Auto-upgrade existing users table schema if columns are missing
+            boolean hasFullName = false;
+            boolean hasDept = false;
+            boolean hasIsActive = false;
+            boolean hasVirtualCol = false;
+            try (java.sql.ResultSet rs = st.executeQuery("SHOW COLUMNS FROM users")) {
+                while (rs.next()) {
+                    String col = rs.getString("Field");
+                    if ("full_name".equalsIgnoreCase(col)) hasFullName = true;
+                    if ("department".equalsIgnoreCase(col)) hasDept = true;
+                    if ("is_active".equalsIgnoreCase(col)) hasIsActive = true;
+                    if ("higher_official_dept".equalsIgnoreCase(col)) hasVirtualCol = true;
+                }
+            } catch (Exception ignored) {}
+
+            if (!hasFullName) {
+                try { st.execute("ALTER TABLE users ADD COLUMN full_name VARCHAR(100) NULL AFTER username"); } catch (Exception ignored) {}
+            }
+            if (!hasDept) {
+                try { st.execute("ALTER TABLE users ADD COLUMN department VARCHAR(100) NULL AFTER role"); } catch (Exception ignored) {}
+            }
+            if (!hasIsActive) {
+                try { st.execute("ALTER TABLE users ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT 1 AFTER department"); } catch (Exception ignored) {}
+            }
+            if (!hasVirtualCol) {
+                try {
+                    st.execute("ALTER TABLE users ADD COLUMN higher_official_dept VARCHAR(100) GENERATED ALWAYS AS (CASE WHEN role = 'HIGHER_OFFICIAL' AND is_active = 1 THEN department ELSE NULL END) VIRTUAL");
+                } catch (Exception ignored) {}
+            }
+            try {
+                st.execute("CREATE UNIQUE INDEX uq_higher_official_dept ON users (higher_official_dept)");
+            } catch (Exception ignored) {}
+
+            // Migrate default departments for legacy accounts if not set
+            try {
+                st.execute("UPDATE users SET department = 'Health', full_name = 'Higher Official - Health' WHERE username = 'higher' AND (department IS NULL OR department = '')");
+                st.execute("UPDATE users SET full_name = 'Public Viewer' WHERE username = 'viewer' AND (full_name IS NULL OR full_name = '')");
+            } catch (Exception ignored) {}
 
             // 2. Documents table
             st.execute("CREATE TABLE IF NOT EXISTS documents ("
